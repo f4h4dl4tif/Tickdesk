@@ -27,7 +27,9 @@ struct MainView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(p.background.ignoresSafeArea())
+        .background {
+            if settings.config.usesGlass { GlassBackdrop(p: p).ignoresSafeArea() } else { p.background.ignoresSafeArea() }
+        }
         .trackVisibility("main")
         .animation(.easeInOut(duration: 0.25), value: settings.config)
         .onAppear { AppActions.shared.openWindow = openWindow }

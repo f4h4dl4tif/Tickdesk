@@ -1,0 +1,74 @@
+How to install Tickdesk
+=======================
+
+Requires macOS 14 Sonoma or later. Runs on Apple Silicon Macs (M1 or newer).
+The Liquid Glass theme needs macOS 26 or later; older Macs keep the solid look.
+
+Tickdesk isn't notarized by Apple, so on a new Mac macOS blocks it the first
+time. Pick ONE of the two ways below, and use the Terminal fixes if it fails.
+
+
+OPTION A: Installer package (Tickdesk-x.x.pkg, inside Tickdesk-x.x.zip)
+------------------------------------------------------------------------
+1. Double-click Tickdesk-x.x.zip to unzip it, then double-click
+   Tickdesk-x.x.pkg.
+2. If macOS says it "can't be opened" or "could not verify" it: click Done,
+   open System Settings > Privacy & Security, scroll to Security and click
+   "Open Anyway" next to Tickdesk-x.x.pkg. Enter your password.
+3. Follow the installer. Tickdesk is installed in Applications; open it
+   from there.
+
+
+OPTION B: Disk image (Tickdesk-x.x.dmg)
+---------------------------------------
+1. Open the .dmg and drag Tickdesk onto the Applications folder.
+2. Open Tickdesk from Applications. If macOS blocks it, click Done (don't
+   move it to the Bin), then System Settings > Privacy & Security >
+   "Open Anyway".
+
+
+IF IT STILL FAILS: Terminal commands
+------------------------------------
+Open Terminal (Applications > Utilities > Terminal), paste a command, press
+Return and type your Mac password when asked (nothing shows as you type).
+
+1. The installer package won't open. Install it from Terminal instead
+   (change the path if the file isn't in Downloads):
+
+       sudo installer -pkg ~/Downloads/Tickdesk-*.pkg -target /
+
+2. Tickdesk is installed but won't open, or macOS says it is "damaged":
+
+       sudo xattr -cr /Applications/Tickdesk.app && open /Applications/Tickdesk.app
+
+3. "Open Anyway" doesn't appear, or the .zip / .pkg / .dmg itself is blocked:
+
+       xattr -c ~/Downloads/Tickdesk-*
+
+   then double-click the file again.
+
+4. Check the Mac is new enough (must say 14 or higher):
+
+       sw_vers -productVersion
+
+Tickdesk doesn't use any privacy permissions (no camera, microphone,
+calendar or notification access), so there's nothing to reset in
+Privacy & Security.
+
+
+AFTER INSTALLING
+----------------
+Press Shift-Command-W to show or hide the desktop clock; drag it to move it
+and right-click it for quick options. Command-, opens Settings, where you pick
+one of four clock styles (Flip Cards, Minimal, LCD Segment, Analog), fonts and
+colors, and turn on the Liquid Glass theme (Appearance tab, macOS 26+).
+Shift-Command-A opens Alarms. The menu bar menu has one-click actions:
+theme wallpaper, turn off display, screen saver and sleep.
+
+Settings and alarms are saved in macOS preferences; wallpapers Tickdesk makes
+are saved in ~/Library/Application Support/Tickdesk.
+
+To uninstall: quit Tickdesk (and turn off "launch at login" in its Settings
+first if you turned it on), then run
+
+       rm -rf /Applications/Tickdesk.app ~/Library/Application\ Support/Tickdesk && defaults delete app.tickdesk.clock

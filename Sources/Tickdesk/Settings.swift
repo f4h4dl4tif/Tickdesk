@@ -236,6 +236,37 @@ struct ClockConfig: Codable, Equatable {
     var widgetOpacity: Double = 1.0
     var widgetBackground = false
     var widgetLocked = false
+    /// Liquid Glass surfaces (macOS 26+). On by default.
+    var glassTheme = true
+
+    init() {}
+
+    // Tolerant decoding: a missing key keeps its default, so new options never reset a saved setup.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = ClockConfig()
+        func v<T: Decodable>(_ k: CodingKeys, _ def: T) -> T { ((try? c.decodeIfPresent(T.self, forKey: k)) ?? nil) ?? def }
+        appearance = v(.appearance, d.appearance)
+        face = v(.face, d.face)
+        presetID = v(.presetID, d.presetID)
+        font = v(.font, d.font)
+        weight = v(.weight, d.weight)
+        customLight = v(.customLight, d.customLight)
+        customDark = v(.customDark, d.customDark)
+        use24h = v(.use24h, d.use24h)
+        showSeconds = v(.showSeconds, d.showSeconds)
+        showDate = v(.showDate, d.showDate)
+        blinkColon = v(.blinkColon, d.blinkColon)
+        dateStyle = v(.dateStyle, d.dateStyle)
+        widgetVisible = v(.widgetVisible, d.widgetVisible)
+        widgetFace = try? c.decodeIfPresent(FaceStyle.self, forKey: .widgetFace)
+        widgetLevel = v(.widgetLevel, d.widgetLevel)
+        widgetScale = v(.widgetScale, d.widgetScale)
+        widgetOpacity = v(.widgetOpacity, d.widgetOpacity)
+        widgetBackground = v(.widgetBackground, d.widgetBackground)
+        widgetLocked = v(.widgetLocked, d.widgetLocked)
+        glassTheme = v(.glassTheme, d.glassTheme)
+    }
 }
 
 @Observable
@@ -319,6 +350,9 @@ extension ClockConfig {
     }
 
     func palette(for scheme: ColorScheme) -> Palette { colors(for: scheme).palette }
+
+    /// Liquid Glass is drawn only when chosen and supported.
+    var usesGlass: Bool { glassTheme && GlassSupport.isAvailable }
 
     func typeface(_ size: CGFloat, weight: Font.Weight? = nil) -> Font {
         font.font(size: size, weight: weight ?? self.weight.weight)

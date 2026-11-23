@@ -102,6 +102,9 @@ private struct WidgetRootView: View {
                 Toggle("Show Seconds", isOn: $settings.config.showSeconds)
                 Toggle("Show Date", isOn: $settings.config.showDate)
                 Toggle("Show Background", isOn: $settings.config.widgetBackground)
+                if GlassSupport.isAvailable {
+                    Toggle("Liquid Glass", isOn: $settings.config.glassTheme)
+                }
                 Toggle("Lock Position", isOn: $settings.config.widgetLocked)
                 Divider()
                 Button("Open Tickdesk") { AppActions.shared.open("main") }

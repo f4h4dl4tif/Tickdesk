@@ -41,10 +41,11 @@ private struct SaveBar: View {
             Button("Revert") { settings.revertDraft() }
                 .disabled(!dirty)
                 .keyboardShortcut(.cancelAction)
+                .glassButton(settings.config.usesGlass)
             Button("Save") { settings.saveDraft() }
                 .disabled(!dirty)
                 .keyboardShortcut("s", modifiers: .command)
-                .buttonStyle(.borderedProminent)
+                .glassButton(settings.config.usesGlass, prominent: true)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -73,6 +74,14 @@ private struct PreviewHeader: View {
             .frame(maxWidth: .infinity)
             .frame(height: 170)
             .padding(.vertical, 4)
+            .background {
+                // Glass needs something behind it to show; plain keeps the form background.
+                if settings.draft.usesGlass {
+                    GlassBackdrop(p: settings.draft.palette(for: previewScheme))
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .padding(-6)
+                }
+            }
     }
 }
 
@@ -94,6 +103,8 @@ private struct AppearanceSettings: View {
                 .pickerStyle(.segmented)
                 Text("System follows macOS Light/Dark mode automatically, including Auto at sunset.")
                     .font(.caption).foregroundStyle(.secondary)
+
+                GlassThemeToggle(isOn: $settings.draft.glassTheme)
 
                 Picker("Clock style", selection: $settings.draft.face) {
                     ForEach(FaceStyle.allCases) { Text($0.title).tag($0) }

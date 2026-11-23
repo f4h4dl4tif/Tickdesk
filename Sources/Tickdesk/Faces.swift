@@ -66,15 +66,19 @@ struct ClockFace: View {
     private func content(_ date: Date) -> some View {
         let t = TimeParts(date, cfg)
         let p = cfg.palette(for: scheme)
-        return face(t, p)
-            .padding(showsBackground ? size * 0.35 : 0)
-            .background {
-                if showsBackground {
-                    RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
-                        .fill(p.background)
-                        .shadow(color: .black.opacity(0.18), radius: size * 0.12, y: size * 0.04)
-                }
-            }
+        return backdrop(face(t, p).padding(showsBackground ? size * 0.35 : 0), p: p)
+    }
+
+    /// The background panel: solid, or one Liquid Glass slab with the theme on.
+    @ViewBuilder
+    private func backdrop<V: View>(_ v: V, p: Palette) -> some View {
+        if showsBackground {
+            v.surface(RoundedRectangle(cornerRadius: size * 0.3, style: .continuous),
+                      fill: p.background, glass: cfg.usesGlass, palette: p,
+                      shadow: size * 0.12, shadowY: size * 0.04, shadowOpacity: 0.18)
+        } else {
+            v
+        }
     }
 
     @ViewBuilder
@@ -94,6 +98,7 @@ struct ClockFace: View {
 private struct FlipCard: View {
     @Environment(ClockSettings.self) private var settings
     @Environment(\.previewConfig) private var preview
+    @Environment(\.onGlass) private var onGlass
     private var cfg: ClockConfig { preview ?? settings.config }
     let text: String
     let p: Palette
@@ -112,11 +117,8 @@ private struct FlipCard: View {
             .frame(minWidth: size * 1.3)
             .padding(.horizontal, size * 0.12)
             .padding(.vertical, size * 0.1)
-            .background(
-                RoundedRectangle(cornerRadius: size * 0.16, style: .continuous)
-                    .fill(p.card)
-                    .shadow(color: .black.opacity(0.16), radius: size * 0.06, y: size * 0.03)
-            )
+            .modifier(CardSurface(shape: RoundedRectangle(cornerRadius: size * 0.16, style: .continuous),
+                                  p: p, size: size, glass: cfg.usesGlass, onGlass: onGlass))
             .overlay {
                 // The hinge line across the middle of a flip card.
                 Rectangle()
@@ -173,6 +175,24 @@ private struct RollingText: View {
                             removal: .offset(y: -travel).combined(with: .scale(scale: 0.6, anchor: .top)).combined(with: .opacity)))
                 }
             }
+        }
+    }
+}
+
+/// A card's fill: the solid card color, glass with the theme on, or a soft inset
+/// when it already sits on the glass background panel (no glass on glass).
+private struct CardSurface<S: Shape>: ViewModifier {
+    let shape: S
+    let p: Palette
+    let size: CGFloat
+    let glass: Bool
+    let onGlass: Bool
+    func body(content: Content) -> some View {
+        if glass && onGlass {
+            content.background(shape.fill(p.glassInset))
+        } else {
+            content.surface(shape, fill: p.card, glass: glass, palette: p,
+                            shadow: size * 0.06, shadowY: size * 0.03, shadowOpacity: 0.16)
         }
     }
 }
@@ -299,6 +319,7 @@ private struct SegmentDigit: View {
 private struct SegmentFace: View {
     @Environment(ClockSettings.self) private var settings
     @Environment(\.previewConfig) private var preview
+    @Environment(\.onGlass) private var onGlass
     private var cfg: ClockConfig { preview ?? settings.config }
     let t: TimeParts, p: Palette, size: CGFloat
 
@@ -342,11 +363,8 @@ private struct SegmentFace: View {
         }
         .padding(.horizontal, size * 0.3)
         .padding(.vertical, size * 0.24)
-        .background(
-            RoundedRectangle(cornerRadius: size * 0.18, style: .continuous)
-                .fill(p.card)
-                .shadow(color: .black.opacity(0.16), radius: size * 0.06, y: size * 0.03)
-        )
+        .modifier(CardSurface(shape: RoundedRectangle(cornerRadius: size * 0.18, style: .continuous),
+                              p: p, size: size, glass: cfg.usesGlass, onGlass: onGlass))
     }
 }
 
@@ -496,6 +514,7 @@ private struct HandShape: Shape {
 private struct AnalogFace: View {
     @Environment(ClockSettings.self) private var settings
     @Environment(\.previewConfig) private var preview
+    @Environment(\.onGlass) private var onGlass
     private var cfg: ClockConfig { preview ?? settings.config }
     let t: TimeParts, p: Palette, size: CGFloat
 
@@ -506,9 +525,13 @@ private struct AnalogFace: View {
         let sec = Double(t.s), min = Double(t.m) + sec / 60, hr = Double(t.h % 12) + min / 60
         VStack(spacing: size * 0.16) {
             ZStack {
-                Circle()
-                    .fill(p.card)
-                    .shadow(color: .black.opacity(0.16), radius: size * 0.08, y: size * 0.03)
+                if cfg.usesGlass {
+                    Color.clear.modifier(CardSurface(shape: Circle(), p: p, size: size, glass: true, onGlass: onGlass))
+                } else {
+                    Circle()
+                        .fill(p.card)
+                        .shadow(color: .black.opacity(0.16), radius: size * 0.08, y: size * 0.03)
+                }
                 TickShape(major: false)
                     .stroke(p.digit.opacity(0.3), style: StrokeStyle(lineWidth: r * 0.012, lineCap: .round))
                 TickShape(major: true)
